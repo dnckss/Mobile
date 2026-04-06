@@ -1,5 +1,5 @@
-// import { useLocalSearchParams } from 'expo-router';
 import { Text, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '@components/themed-view';
 import ProfileFeedList from '@components/profile/feed/ProfileFeedList';
@@ -10,13 +10,13 @@ import ContentContainer from '@components/container';
 import NavigationTop from '@components/navigation/NavigationTop';
 
 export default function UserProfileScreen() {
-    // 어떻게 받아와야 할까요?
-    const { id } = { id: '1' };
+    const params = useLocalSearchParams<{ id?: string | string[] }>();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-    const user = MOCK_USERS_MAP[id];
-    const posts = MOCK_POSTS.filter(post => post.userId === id);
+    const user = id ? MOCK_USERS_MAP[id] : undefined;
+    const posts = id ? MOCK_POSTS.filter(post => post.userId === id) : [];
 
-    if (!user) {
+    if (!id || !user) {
         return (
             <ThemedView style={styles.notFound}>
                 <Text style={styles.notFoundText}>유저를 찾을 수 없어요.</Text>
@@ -47,7 +47,6 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 20,
     },
     notFound: {
         flex: 1,

@@ -7,14 +7,11 @@ import { FeedPostCaption } from './FeedPostCaption';
 import { ThemedView } from '@components/themed-view';
 import FeedImage from '@components/feed/post/FeedImage';
 import { resolveImageSource } from '@/utils/image';
-import { MOCK_USERS_MAP } from '@/mock/users';
 
 function FeedPost({ post }: { post: Post }) {
-    const user = MOCK_USERS_MAP[post.userId];
+    const user = post.author;
 
-    if (!user) {
-        return null;
-    }
+    if (!user) return null;
 
     return (
         <ThemedView style={styles.feedMargin}>
@@ -22,8 +19,10 @@ function FeedPost({ post }: { post: Post }) {
             <FeedImage image={resolveImageSource(post.images[0])} />
             <ContentContainer style={{ gap: 4 }}>
                 <FeedPostActions
+                    postId={post.id}
                     initialLikes={post.likes}
-                    comments={post.comments}
+                    initialLiked={post.liked}
+                    commentCount={post.commentCount ?? post.comments.length}
                 />
                 <FeedPostCaption
                     username={user.username}
