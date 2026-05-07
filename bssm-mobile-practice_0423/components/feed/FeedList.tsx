@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet } from 'react-native';
 import Animated, {
     useAnimatedScrollHandler,
     SharedValue,
@@ -6,6 +6,9 @@ import Animated, {
 import { Post } from '@type/Post';
 import { SwipeableFeedPost } from './post/SwipeableFeedPost';
 import { useFeedStore } from '@/store/feed-store';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 // Animated.FlatList: Reanimated의 네이티브 이벤트 시스템과 연결된 FlatList
 // — onScroll 핸들러가 JS 브리지 없이 UI 스레드에서 직접 실행됨
@@ -33,7 +36,18 @@ function FeedList({
             data={posts}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-                <SwipeableFeedPost post={item} onDelete={removePost} />
+                <ErrorBoundary
+                    key={item.id}
+                    fallback={
+                        <ThemedView style={postStyles.error}>
+                            <ThemedText type='default'>
+                                이 게시물을 표시할 수 없어요.
+                            </ThemedText>
+                        </ThemedView>
+                    }
+                >
+                    <SwipeableFeedPost post={item} onDelete={removePost} />
+                </ErrorBoundary>
             )}
             showsVerticalScrollIndicator={false}
             onEndReached={onEndReached}
@@ -50,5 +64,15 @@ function FeedList({
         />
     );
 }
+
+const postStyles = StyleSheet.create({
+    error: {
+        paddingVertical: 24,
+        paddingHorizontal: 16,
+        marginBottom: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+});
 
 export { FeedList };

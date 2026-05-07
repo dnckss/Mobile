@@ -3,6 +3,7 @@ import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import NavigationTop from '@components/navigation/NavigationTop';
 import ContentContainer from '@components/container';
 import { FeedList } from '@components/feed/FeedList';
+import { FeedError } from '@components/feed/FeedError';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@components/themed-view';
 import { useFeedStore } from '@/store/feed-store';
@@ -15,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 export default function HomeScreen() {
-    const { posts, loading, fetchFeed, loadMore } = useFeedStore();
+    const { posts, loading, error, fetchFeed, loadMore } = useFeedStore();
     const router = useRouter();
 
     // scrollY: 스크롤 위치를 UI 스레드에서 직접 추적하는 SharedValue
@@ -72,6 +73,8 @@ export default function HomeScreen() {
 
             {loading && posts.length === 0 ? (
                 <ActivityIndicator style={{ flex: 1 }} />
+            ) : error && posts.length === 0 ? (
+                <FeedError message={error} onRetry={fetchFeed} />
             ) : (
                 // scrollY를 FeedList에 전달 → useAnimatedScrollHandler가 내부에서 처리
                 <FeedList
