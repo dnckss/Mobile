@@ -1,20 +1,10 @@
-import { ExpoConfig, ConfigContext } from 'expo/config';
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
+// @ts-check
+/** @type {(ctx: import('expo/config').ConfigContext) => import('expo/config').ExpoConfig} */
+module.exports = ({ config }) => ({
     ...config,
     name: 'MyFeed',
     slug: 'MyFeed',
-    owner: 'dncks',
     version: '1.0.0',
-    runtimeVersion: {
-        policy: 'appVersion',
-    },
-    updates: {
-        url: 'https://u.expo.dev/3e69b6a3-4231-494e-ab13-836f22135fc3',
-        enabled: true,
-        fallbackToCacheTimeout: 0,
-        checkAutomatically: 'ON_LOAD',
-    },
     orientation: 'portrait',
     icon: './assets/images/icon.png',
     scheme: 'myfeed',
@@ -38,6 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         favicon: './assets/images/favicon.png',
     },
     plugins: [
+        '@sentry/react-native/expo',
         'expo-router',
         'expo-secure-store',
         [
@@ -74,7 +65,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     extra: {
         apiUrl: process.env.EXPO_PUBLIC_API_URL,
         eas: {
-            projectId: '3e69b6a3-4231-494e-ab13-836f22135fc3',
+            projectId: 'ID',
         },
     },
+    owner: 'zer0base',
 });

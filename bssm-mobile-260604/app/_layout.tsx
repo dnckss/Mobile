@@ -10,33 +10,21 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Sentry from '@sentry/react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@components/themed-text';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { StyleSheet } from 'react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { usePushRegistration } from '@/hooks/use-push-registration';
 import * as Notifications from 'expo-notifications';
-import * as Sentry from '@sentry/react-native';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: true,
-
-  // Enable Logs
-  enableLogs: true,
-
-  // Configure Session Replay
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    environment: __DEV__ ? 'dev' : 'prod',
+    tracesSampleRate: 0.1,
+    enabled: !__DEV__,
 });
 
 // 포그라운드에서도 알림 배너가 보이도록 설정
@@ -59,31 +47,31 @@ export const unstable_settings = {
 const AUTH_ROUTES = new Set(['login', 'signup']);
 
 function AuthGuard() {
-    const status = useAuthStore(s => s.status);
+    const { accessToken, status } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
 
     usePushRegistration();
 
     useEffect(() => {
-        // 부트스트랩 진행 중에는 섣불리 화면을 이동시키지 않는다
+        // checking 중에는 라우팅하지 않음 — Splash가 유지되는 동안 대기
         if (status === 'checking') return;
 
         const currentRoute = segments[0] as string | undefined;
         const inAuthRoute = AUTH_ROUTES.has(currentRoute ?? '');
 
-        if (status === 'guest' && !inAuthRoute) {
+        if (!accessToken && !inAuthRoute) {
             router.replace('/login' as never);
-        } else if (status === 'authenticated' && inAuthRoute) {
+        } else if (accessToken && inAuthRoute) {
             router.replace('/(tabs)');
         }
-    }, [status, segments]);
+    }, [accessToken, status, segments]);
 
     return null;
 }
 
-export default Sentry.wrap(function RootLayout() {
-    const bootstrap = useAuthStore(s => s.bootstrap);
+export default function RootLayout() {
+    const { bootstrap } = useAuthStore();
     const colorScheme = useColorScheme();
     const [loaded] = useFonts({
         'Pretendard-Regular': require('../assets/fonts/Pretendard-Regular.otf'),
@@ -93,10 +81,9 @@ export default Sentry.wrap(function RootLayout() {
         'Pretendard-ExtraBold': require('../assets/fonts/Pretendard-ExtraBold.otf'),
     });
 
-    // 앱 시작 시 한 번만 호출: SecureStore의 토큰을 읽고 서버로 재검증한다
+    // 앱 시작 시 한 번 — SecureStore 토큰 조회 → 서버 검증 → status 결정
     useEffect(() => {
         bootstrap();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -110,6 +97,7 @@ export default Sentry.wrap(function RootLayout() {
             <ThemeProvider
                 value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
             >
+                {/* 전역 Boundary — 어디서든 uncaught 렌더 에러를 잡아 흰 화면을 방지 */}
                 <ErrorBoundary
                     onError={err =>
                         console.error('[GlobalBoundary]', err.message)
@@ -170,7 +158,7 @@ export default Sentry.wrap(function RootLayout() {
             </ThemeProvider>
         </GestureHandlerRootView>
     );
-});
+}
 
 const styles = StyleSheet.create({
     default: {
